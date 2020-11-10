@@ -1,4 +1,4 @@
-# Reglas de la memoria
+# Reglas de la Memoria
 Creo que es aconsejable que usemos LaTeX.
 
 Reglas:
