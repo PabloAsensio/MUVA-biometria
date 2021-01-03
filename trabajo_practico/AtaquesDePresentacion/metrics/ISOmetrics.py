@@ -130,6 +130,7 @@ def metric(
     plt.ylabel("BPCER")
     plt.title("APCER - BPCER curve")
     plt.plot(APCER_ROC, BPCER_ROC)
+    plt.grid()
     plt.savefig(out_path + "APCER-BPCER-curve.png")
     plt.close()
 
