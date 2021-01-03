@@ -16,11 +16,11 @@ def do_classification(features, seed=1234):
     # randomize labels and features
     features = shuffle(features, random_state=seed)
 
-    # img_path = features.iloc[:, -1]
-
     # Extractind data
     labels = features.iloc[:, -2]
+    labels = labels.astype("float16")
     features = features.drop(features.columns[[-1, -2]], axis=1)
+    features = features.astype("float32")
 
     # Separate train and test data
     features_train, features_test, labels_train, labels_test = train_test_split(
@@ -104,7 +104,7 @@ def histogram_features(img_list):
         )
     print("Done! (Extracting histogram features)")
 
-    return features_df
+    return features_df.convert_dtypes()
 
 
 def calculate_histogram(img):
@@ -117,7 +117,7 @@ def calculate_histogram(img):
     #     plt.plot(histr, color=col)
     #     plt.xlim([0, 256])
     # plt.show()
-    hist = np.asarray(hist, dtype=np.float32)
+    hist = np.asarray(hist, dtype=np.float64)
     return np.ravel(hist)
 
 
