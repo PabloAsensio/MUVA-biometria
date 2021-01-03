@@ -12,12 +12,13 @@ if __name__ == "__main__":
         "./FravAttack/FLIR/Rainbow/front", ext=".jpg"
     )  # Change to your dataset path
 
-    # features_df = histogram_features(img_list)
+    features_df = histogram_features(img_list)
 
     # # DECOMMENT if you wanna store df to .csv
     # features_df.to_csv("histogram_features.csv", index=False)
 
-    features_df = pd.read_csv("histogram_features.csv", header=0, delimiter=",")
+    # # DECOMMENT if you wanna read df from .csv
+    # features_df = pd.read_csv("histogram_features.csv", header=0, delimiter=",")
 
     # Train and test soft voting classifier
     (y_prob, y_predic, y_real) = do_classification(features_df)
