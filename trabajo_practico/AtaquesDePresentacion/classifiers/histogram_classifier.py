@@ -123,7 +123,7 @@ def calculate_histogram(img):
 
 def calculate_label(img):
     """
-    1 is bonafide, otherwise 0
+    0 is bonafide, otherwise 1
     """
     if "users" in img:
         return 0
