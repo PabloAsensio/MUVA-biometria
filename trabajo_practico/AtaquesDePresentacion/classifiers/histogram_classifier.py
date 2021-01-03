@@ -67,7 +67,7 @@ def classifier(X, Y, seed=1234):
         C=0.1, gamma=0.05, kernel="rbf", random_state=seed, probability=True
     )
     svm_clf_3 = SVC(C=1, gamma=0.075, kernel="rbf", random_state=seed, probability=True)
-    tree_clf = DT(max_depth=3, random_state=1234)
+    tree_clf = DT(max_depth=3, random_state=seed)
 
     clf = VotingClassifier(
         estimators=[
