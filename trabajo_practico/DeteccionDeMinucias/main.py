@@ -74,6 +74,7 @@ def getTerminationBifurcation(image):
 
 def skeletonization(iimg):
     img = cv2.imread(iimg, 0)
+    cv2.imshow("original", img)
     size = np.size(img)
     skel = np.zeros(img.shape, np.uint8)
 
