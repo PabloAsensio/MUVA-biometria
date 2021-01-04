@@ -1,6 +1,10 @@
-import cv2
-import numpy as np
 from os import listdir
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+from skimage import io
+from skimage.morphology import skeletonize
 
 
 def rotateFilter(filter):
@@ -100,4 +104,17 @@ def skeletonization(iimg):
 
 if __name__ == "__main__":
     img = "./huellasFVC2004/101_3.tif"
-    skeletonization(img)
+
+    image = cv2.imread(img, 0)
+    plt.matshow(image, cmap="gray")
+    plt.title("original")
+
+    image = cv2.adaptiveThreshold(
+        image, 1, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2
+    )
+
+    sklen = skeletonize(image)
+
+    plt.matshow(sklen, cmap="gray")
+    plt.title("skleton")
+    plt.show()
