@@ -2,21 +2,23 @@ import cv2
 import numpy as np
 from os import listdir
 
-def rotateFilter (filter):
+
+def rotateFilter(filter):
     return np.rot90(filter)
+
 
 def thinnedImage(image, kernel):
     img1 = image.copy()
-    thin = np.zeros(image.shape, dtype='uint8')
+    thin = np.zeros(image.shape, dtype="uint8")
 
-
-    while (cv2.countNonZero(img1)!=0):
+    while cv2.countNonZero(img1) != 0:
         erode = cv2.erode(img1, kernel)
-        opening = cv2.morphologyEx(erode ,cv2.MORPH_OPEN, kernel)
+        opening = cv2.morphologyEx(erode, cv2.MORPH_OPEN, kernel)
         subset = erode - opening
         thin = cv2.bitwise_or(subset, thin)
         img1 = erode.copy()
     return thin
+
 
 def erase(image):
     image = cv2.erode(image, np.ones((3, 3)))
@@ -25,49 +27,67 @@ def erase(image):
     image = cv2.erode(image, np.ones((2, 2)))
     return image
 
+
 def getTerminationBifurcation(image):
     newImage = image.copy()
     newImage = cv2.cvtColor(newImage, cv2.COLOR_GRAY2RGB)
-    ret, image = cv2.threshold(image, 127,1, cv2.THRESH_BINARY)
+    ret, image = cv2.threshold(image, 127, 1, cv2.THRESH_BINARY)
     for i in range(1, image.shape[0] - 1):
         for j in range(1, image.shape[1] - 1):
             if image[i][j] == 1:
-                cells = [(-1, -1), (-1, 0), (-1, 1),
-                         (0, 1),  (1, 1),  (1, 0),
-                         (1, -1), (0, -1), (-1, -1)]
+                cells = [
+                    (-1, -1),
+                    (-1, 0),
+                    (-1, 1),
+                    (0, 1),
+                    (1, 1),
+                    (1, 0),
+                    (1, -1),
+                    (0, -1),
+                    (-1, -1),
+                ]
 
                 values = [image[i + l][j + k] for k, l in cells]
                 values = np.reshape(values, 9).astype(np.int)
                 crossings = 0
                 for k in range(0, len(values) - 1):
-                    crossings += abs(values[k] - values[k+1])
+                    crossings += abs(values[k] - values[k + 1])
                 crossings //= 2
                 if crossings == 1:
-                    cv2.circle(newImage, (j - 1, i - 1), radius=4, color=(0, 0, 255), thickness=1)
+                    cv2.circle(
+                        newImage,
+                        (j - 1, i - 1),
+                        radius=4,
+                        color=(0, 0, 255),
+                        thickness=1,
+                    )
                 if crossings == 3:
-                    cv2.circle(newImage, (j - 1, i - 1), radius=4, color=(255, 0, 0), thickness=1)
+                    cv2.circle(
+                        newImage,
+                        (j - 1, i - 1),
+                        radius=4,
+                        color=(255, 0, 0),
+                        thickness=1,
+                    )
     return newImage
 
 
-
-
-
 images = []
-path = 'D:/Descargas/prac2/huellasFVC2004/'
+path = "./huellasFVC2004/"
 for file in listdir(path):
-    images.append(cv2.imread(path+file, cv2.IMREAD_GRAYSCALE))
+    images.append(cv2.imread(path + file, cv2.IMREAD_GRAYSCALE))
 
 images = np.asarray(images)
 for image in images:
 
-    cv2.imshow('ori', image)
-    ret ,image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-    cv2.imshow('binarize', image)
+    cv2.imshow("ori", image)
+    ret, image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    cv2.imshow("binarize", image)
 
     image = erase(image)
-    cv2.imshow('erase', image)
+    cv2.imshow("erase", image)
 
-    '''filter_VH = np.matrix('0, 1, 0;'
+    """filter_VH = np.matrix('0, 1, 0;'
                           '0, 1, 0;'
                           '0, 1, 0').astype(np.uint8)
 
@@ -92,34 +112,26 @@ for image in images:
 
     match = image_v + image_h + image_diag + image_diag2
 
-    cv2.imshow('mathc', match)'''
+    cv2.imshow('mathc', match)"""
 
-
-    kernel = cv2.getStructuringElement(cv2.MORPH_CROSS,(3,3))
+    kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
     testImage = thinnedImage(image, kernel)
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3,3))
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
     testImage = testImage + thinnedImage(testImage, kernel)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     image = testImage + thinnedImage(image, kernel)
-    cv2.imshow('thinned', image)
-
-
-
-
+    cv2.imshow("thinned", image)
 
     image = getTerminationBifurcation(image)
-    cv2.imshow('terminations', image)
+    cv2.imshow("terminations", image)
 
+    # image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+    # cv2.imshow('rgb', image)
 
-
-
-    #image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-    #cv2.imshow('rgb', image)
-
-    #bifur = np.matrix('1, 0, 0, 0;'
-     #                 '0, 1, 1, 1;'
-      #                '1, 0, 0, 0').astype(np.uint8)
-    '''newImage = image.copy()
+    # bifur = np.matrix('1, 0, 0, 0;'
+    #                 '0, 1, 1, 1;'
+    #                '1, 0, 0, 0').astype(np.uint8)
+    """newImage = image.copy()
     bifur = cv2.imread('bifurcacion.jpg')
     ret ,bifur = cv2.threshold(bifur, 150, 255, cv2.THRESH_BINARY )
     h, w, canals = bifur.shape
@@ -166,6 +178,5 @@ for image in images:
 
 
 
-    cv2.imshow('rectangles', newImage)'''
+    cv2.imshow('rectangles', newImage)"""
     cv2.waitKey()
-
