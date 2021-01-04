@@ -1,6 +1,9 @@
+from os import listdir
+
 import cv2
 import numpy as np
-from os import listdir
+from skimage import io
+from skimage.morphology import skeletonize
 
 
 def rotateFilter(filter):
@@ -73,6 +76,7 @@ def getTerminationBifurcation(image):
 
 
 def preprocessing(image):
+    image = cv2.imread(image, 0)
     # cv2.imshow("ori", image)
     ret, image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
     # cv2.imshow("binarize", image)
@@ -172,47 +176,74 @@ def preprocessing(image):
 
 
     cv2.imshow('rectangles', newImage)"""
-    cv2.imshow("processed", image)
-    cv2.waitKey()
+    return image.copy()
 
 
-images = []
-path = "./huellasFVC2004/"
-for file in listdir(path):
-    images.append(cv2.imread(path + file, cv2.IMREAD_GRAYSCALE))
+# images = []
+# path = "./huellasFVC2004/"
+# for file in listdir(path):
+#     images.append(cv2.imread(path + file, cv2.IMREAD_GRAYSCALE))
 
-images = np.asarray(images)
-for image in images:
-    preprocessing(image)
+# images = np.asarray(images)
+# for image in images:
+#     preprocessing(image)
 
 
 def skeletonization(img):
-    # img = cv2.imread(iimg, 0)
-    # cv2.imshow("original", img)
+    # Read the image as a grayscale image
+    img = cv2.imread(img, 0)
+
+    # Threshold the image
+    ret, img = cv2.threshold(img, 127, 255, 0)
+
+    # Step 1: Create an empty skeleton
     size = np.size(img)
     skel = np.zeros(img.shape, np.uint8)
 
-    ret, img = cv2.threshold(img, 127, 255, 0)
+    # Get a Cross Shaped Kernel
     element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
-    done = False
 
-    while not done:
+    count = 1
+    # Repeat steps 2-4
+    while True:
+        print(count)
+        count += 1
+        # Step 2: Open the image
+        open = cv2.morphologyEx(img, cv2.MORPH_OPEN, element)
+        # Step 3: Substract open from the original image
+        temp = cv2.subtract(img, open)
+        # Step 4: Erode the original image and refine the skeleton
         eroded = cv2.erode(img, element)
-        temp = cv2.dilate(eroded, element)
-        temp = cv2.subtract(img, temp)
         skel = cv2.bitwise_or(skel, temp)
         img = eroded.copy()
-
-        zeros = size - cv2.countNonZero(img)
-        if zeros == size:
-            done = True
-
-    cv2.imshow("skel", skel)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+        # Step 5: If there are no white pixels left ie.. the image has been completely eroded, quit the loop
+        if cv2.countNonZero(img) == 0:
+            break
+        # cv2.imshow("skel.png", img)
+    return img.copy()
 
 
 if __name__ == "__main__":
     img = "./huellasFVC2004/101_3.tif"
-    preprocessing(img)
-    # skeletonization(img)
+
+    image = cv2.imread(img, 0)
+    image = cv2.adaptiveThreshold(
+        image, 1, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2
+    )
+
+    sklen = skeletonize(image)
+    # io.imshow(image)
+    io.imshow(sklen)
+    io.show()
+
+    # image = preprocessing(img)
+    # cv2.imshow("processed", image)
+
+    # sklen = skeletonization(img)
+    # cv2.imshow("skel", sklen)
+    # # cv2.imwrite("skel.png", image)
+    # edges = cv2.Canny(image, 100, 200)
+    # cv2.imshow("canny", edges)
+
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
