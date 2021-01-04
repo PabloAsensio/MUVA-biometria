@@ -72,20 +72,13 @@ def getTerminationBifurcation(image):
     return newImage
 
 
-images = []
-path = "./huellasFVC2004/"
-for file in listdir(path):
-    images.append(cv2.imread(path + file, cv2.IMREAD_GRAYSCALE))
-
-images = np.asarray(images)
-for image in images:
-
-    cv2.imshow("ori", image)
+def preprocessing(image):
+    # cv2.imshow("ori", image)
     ret, image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-    cv2.imshow("binarize", image)
+    # cv2.imshow("binarize", image)
 
     image = erase(image)
-    cv2.imshow("erase", image)
+    # cv2.imshow("erase", image)
 
     """filter_VH = np.matrix('0, 1, 0;'
                           '0, 1, 0;'
@@ -120,10 +113,10 @@ for image in images:
     testImage = testImage + thinnedImage(testImage, kernel)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     image = testImage + thinnedImage(image, kernel)
-    cv2.imshow("thinned", image)
+    # cv2.imshow("thinned", image)
 
-    image = getTerminationBifurcation(image)
-    cv2.imshow("terminations", image)
+    # image = getTerminationBifurcation(image)
+    # cv2.imshow("terminations", image)
 
     # image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
     # cv2.imshow('rgb', image)
@@ -179,4 +172,47 @@ for image in images:
 
 
     cv2.imshow('rectangles', newImage)"""
+    cv2.imshow("processed", image)
     cv2.waitKey()
+
+
+images = []
+path = "./huellasFVC2004/"
+for file in listdir(path):
+    images.append(cv2.imread(path + file, cv2.IMREAD_GRAYSCALE))
+
+images = np.asarray(images)
+for image in images:
+    preprocessing(image)
+
+
+def skeletonization(img):
+    # img = cv2.imread(iimg, 0)
+    # cv2.imshow("original", img)
+    size = np.size(img)
+    skel = np.zeros(img.shape, np.uint8)
+
+    ret, img = cv2.threshold(img, 127, 255, 0)
+    element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
+    done = False
+
+    while not done:
+        eroded = cv2.erode(img, element)
+        temp = cv2.dilate(eroded, element)
+        temp = cv2.subtract(img, temp)
+        skel = cv2.bitwise_or(skel, temp)
+        img = eroded.copy()
+
+        zeros = size - cv2.countNonZero(img)
+        if zeros == size:
+            done = True
+
+    cv2.imshow("skel", skel)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    img = "./huellasFVC2004/101_3.tif"
+    preprocessing(img)
+    # skeletonization(img)
