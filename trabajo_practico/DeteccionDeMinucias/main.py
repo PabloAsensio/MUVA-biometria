@@ -5,7 +5,6 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from skimage import io
 from skimage.morphology import skeletonize
 
 
