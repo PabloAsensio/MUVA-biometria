@@ -13,7 +13,7 @@ def rotateFilter(filter):
     return np.rot90(filter)
 
 
-def thinnedImage(image, kernel):
+def thinnedImage(image, kernel=cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))):
     img1 = image.copy()
     thin = np.zeros(image.shape, dtype="uint8")
 
@@ -108,14 +108,14 @@ def skeletonization(img):
 
 def isBifurcation(row, col, img):
     summation = (
-        img[row + 1][col - 1]
-        + img[row + 1][col]
-        + img[row + 1][col + 1]
-        + img[row][col - 1]
-        + img[row][col + 1]
-        + img[row - 1][col - 1]
-        + img[row - 1][col]
-        + img[row - 1][col + 1]
+        int(img[row + 1][col - 1])
+        + int(img[row + 1][col])
+        + int(img[row + 1][col + 1])
+        + int(img[row][col - 1])
+        + int(img[row][col + 1])
+        + int(img[row - 1][col - 1])
+        + int(img[row - 1][col])
+        + int(img[row - 1][col + 1])
     )
     if summation == 3:
         return True
@@ -124,14 +124,14 @@ def isBifurcation(row, col, img):
 
 def isEnding(row, col, img):
     summation = (
-        img[row + 1][col - 1]
-        + img[row + 1][col]
-        + img[row + 1][col + 1]
-        + img[row][col - 1]
-        + img[row][col + 1]
-        + img[row - 1][col - 1]
-        + img[row - 1][col]
-        + img[row - 1][col + 1]
+        int(img[row + 1][col - 1])
+        + int(img[row + 1][col])
+        + int(img[row + 1][col + 1])
+        + int(img[row][col - 1])
+        + int(img[row][col + 1])
+        + int(img[row - 1][col - 1])
+        + int(img[row - 1][col])
+        + int(img[row - 1][col + 1])
     )
     if summation == 1:
         return True
@@ -142,33 +142,33 @@ if __name__ == "__main__":
     img = "./huellasFVC2004/101_3.tif"
 
     image = cv2.imread(img, 0)
+
     plt.matshow(image, cmap="gray")
     plt.title("original")
+    fig1 = plt.figure(1)
+
+    plt.matshow(np.invert(image), cmap="gray")
+    plt.title("invert image")
+    fig2 = plt.figure(2)
 
     image = cv2.adaptiveThreshold(
-        image, 1, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2
+        np.invert(image), 1, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2
     )
 
     sklen = skeletonize(image)
 
     rows, cols = sklen.shape
 
-    # print(sklen)
     minutaes = []
-
-    # sklen[479][639]
 
     for i in range(1, rows - 1):
         for j in range(1, cols - 1):
-            if isBifurcation(i, j, sklen) and isEnding(i, j, sklen):
-                print("Algo salio mal")
-                sys.exit(1)
+            if sklen[i][j]:
+                if isBifurcation(i, j, sklen):
+                    minutaes.append([i, j, 3])
 
-            if isBifurcation(i, j, sklen):
-                minutaes.append([i, j, 3])
-
-            if isEnding(i, j, sklen):
-                minutaes.append([i, j, 1])
+                if isEnding(i, j, sklen):
+                    minutaes.append([i, j, 1])
 
     minucias = pd.DataFrame.from_records(minutaes)
     minucias.columns = ["row", "col", "label"]
@@ -178,11 +178,15 @@ if __name__ == "__main__":
 
     img = plt.imread(img)
 
-    # plt.plot(terminaciones["col"], terminaciones["row"], "b.", label="terminaciones")
+    fig3 = plt.figure(3)
+
+    plt.plot(terminaciones["col"], terminaciones["row"], "b.", label="terminaciones")
     plt.plot(bifurcaciones["col"], bifurcaciones["row"], "r.", label="bifurcaciones")
 
     plt.imshow(img, cmap="gray")
     plt.legend(loc="best")
+    plt.title("minutaes")
+
     plt.show()
 
     # df.to_csv("minutaes.csv", sep=";")
