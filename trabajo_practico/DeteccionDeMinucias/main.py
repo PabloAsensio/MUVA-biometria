@@ -142,8 +142,8 @@ if __name__ == "__main__":
     img = "./huellasFVC2004/101_3.tif"
 
     image = cv2.imread(img, 0)
-    # plt.matshow(image, cmap="gray")
-    # plt.title("original")
+    plt.matshow(image, cmap="gray")
+    plt.title("original")
 
     image = cv2.adaptiveThreshold(
         image, 1, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2
