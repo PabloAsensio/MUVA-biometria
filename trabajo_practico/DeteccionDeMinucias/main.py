@@ -49,19 +49,28 @@ if __name__ == "__main__":
     plt.title("original")
     fig1 = plt.figure(1)
 
-    plt.matshow(np.invert(image), cmap="gray")
-    plt.title("invert image")
-    fig2 = plt.figure(2)
-
     image = cv2.adaptiveThreshold(
         np.invert(image), 1, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2
     )
 
+    plt.matshow(image, cmap="gray")
+    plt.title("invert image; adaptiveThreshold")
+    fig2 = plt.figure(2)
+
+    # contours, hierarchy = cv2.findContours(image, 1, 2)
+
+    # for contour in contours:
+    #     print(contour)
+
+    # plt.matshow(image, cmap="gray")
+    # plt.title("invert image; adaptiveThreshold; Contornos")
+    # fig3 = plt.figure(3)
+
     sklen = skeletonize(image)
 
-    # fig3 = plt.figure(3)
-    # plt.matshow(sklen, cmap="gray")
-    # plt.title("skleton")
+    plt.matshow(sklen, cmap="gray")
+    plt.title("skleton")
+    fig4 = plt.figure(4)
 
     rows, cols = sklen.shape
 
@@ -84,7 +93,7 @@ if __name__ == "__main__":
 
     img = plt.imread(img)
 
-    fig3 = plt.figure(4)
+    fig5 = plt.figure(5)
 
     plt.plot(terminaciones["col"], terminaciones["row"], "b.", label="terminaciones")
     plt.plot(bifurcaciones["col"], bifurcaciones["row"], "r.", label="bifurcaciones")
