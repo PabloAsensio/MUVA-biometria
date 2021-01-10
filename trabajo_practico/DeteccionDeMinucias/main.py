@@ -1,3 +1,4 @@
+import os
 import sys
 from os import listdir
 
@@ -7,6 +8,7 @@ import numpy as np
 import pandas as pd
 from skimage.filters import gabor
 from skimage.morphology import skeletonize
+
 
 # Eliminar parte de la imagen que se queda fuera de la huella
 def getFingerprintRegion(img):
@@ -124,12 +126,9 @@ def isMinutaeClose(i, j, typeMinutae, l):
     return False
 
 
-if __name__ == "__main__":
-    plot = True
-    img = "./huellasFVC2004/101_3.tif"
-
+def minutaeExtraction(img_path, plot=False):
     # se lee la imagen de la huella
-    image = cv2.imread(img, 0)
+    image = cv2.imread(img_path, 0)
 
     if plot:
         cv2.imshow("original", image)
@@ -190,7 +189,7 @@ if __name__ == "__main__":
     if plot:
         img = plt.imread(img)
 
-        fig5 = plt.figure(5)
+        _ = plt.figure(5)
 
         plt.plot(
             terminaciones["col"], terminaciones["row"], "b.", label="terminaciones"
@@ -205,8 +204,34 @@ if __name__ == "__main__":
 
         plt.show()
 
-    # se guarda un txt con las minucias
-    minucias.to_csv("minutaes.txt", sep=";")
+    # se extrae el nombre del archivo
+    img_name = img_path.split("/")[-1]
+    img_name = "./Minutae_Extraction/" + img_name.replace(".tif", ".txt")
 
-    cv2.waitKey()
-    cv2.destroyAllWindows()
+    # se guarda un txt con las minucias
+    minucias.to_csv(img_name, sep=";")
+
+    if plot:
+        cv2.waitKey()
+        cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    plot = True
+    imgs = [
+        "./huellasFVC2004/101_3.tif",
+        "./huellasFVC2004/101_8.tif",
+        "./huellasFVC2004/106_3.tif",
+        "./huellasFVC2004/110_7.tif",
+    ]
+
+    dirName = "Minutae_Extraction"
+    try:
+        # Create target Directory
+        os.mkdir(dirName)
+        print("Directory ", dirName, " Created ")
+    except FileExistsError:
+        print("Directory ", dirName, " already exists")
+
+    for img in imgs:
+        minutaeExtraction(img)
