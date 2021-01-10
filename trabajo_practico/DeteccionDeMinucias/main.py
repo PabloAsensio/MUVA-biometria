@@ -1,120 +1,212 @@
+import sys
 from os import listdir
 
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-from skimage import io
+import pandas as pd
+from skimage.filters import gabor
 from skimage.morphology import skeletonize
 
+# Eliminar parte de la imagen que se queda fuera de la huella
+def getFingerprintRegion(img):
+    row1 = 0
+    row2 = 0
+    col1 = 0
+    col2 = 0
+    for row in range(img.shape[0]):
+        row1 = row
+        if np.sum(img[row, 0 : img.shape[1]]) > 10:
+            break
 
-def rotateFilter(filter):
-    return np.rot90(filter)
+    for row in range(img.shape[0]):
+        row2 = img.shape[0] - row - 1
+        if np.sum(img[row2, 0 : img.shape[1]]) > 10:
+            break
 
+    for row in range(img.shape[1]):
+        col1 = row
+        if np.sum(img[0 : img.shape[0], col1]) > 10:
+            break
 
-def thinnedImage(image, kernel):
-    img1 = image.copy()
-    thin = np.zeros(image.shape, dtype="uint8")
+    for row in range(img.shape[1]):
+        col2 = img.shape[0] - row - 1
+        if np.sum(img[0 : img.shape[0], col2]) > 10:
+            break
 
-    while cv2.countNonZero(img1) != 0:
-        erode = cv2.erode(img1, kernel)
-        opening = cv2.morphologyEx(erode, cv2.MORPH_OPEN, kernel)
-        subset = erode - opening
-        thin = cv2.bitwise_or(subset, thin)
-        img1 = erode.copy()
-    return thin
-
-
-def erase(image):
-    image = cv2.erode(image, np.ones((3, 3)))
-    image = cv2.dilate(image, np.ones((2, 2)))
-    image = cv2.dilate(image, np.ones((2, 2)))
-    image = cv2.erode(image, np.ones((2, 2)))
-    return image
-
-
-def getTerminationBifurcation(image):
-    newImage = image.copy()
-    newImage = cv2.cvtColor(newImage, cv2.COLOR_GRAY2RGB)
-    ret, image = cv2.threshold(image, 127, 1, cv2.THRESH_BINARY)
-    for i in range(1, image.shape[0] - 1):
-        for j in range(1, image.shape[1] - 1):
-            if image[i][j] == 1:
-                cells = [
-                    (-1, -1),
-                    (-1, 0),
-                    (-1, 1),
-                    (0, 1),
-                    (1, 1),
-                    (1, 0),
-                    (1, -1),
-                    (0, -1),
-                    (-1, -1),
-                ]
-
-                values = [image[i + l][j + k] for k, l in cells]
-                values = np.reshape(values, 9).astype(np.int)
-                crossings = 0
-                for k in range(0, len(values) - 1):
-                    crossings += abs(values[k] - values[k + 1])
-                crossings //= 2
-                if crossings == 1:
-                    cv2.circle(
-                        newImage,
-                        (j - 1, i - 1),
-                        radius=4,
-                        color=(0, 0, 255),
-                        thickness=1,
-                    )
-                if crossings == 3:
-                    cv2.circle(
-                        newImage,
-                        (j - 1, i - 1),
-                        radius=4,
-                        color=(255, 0, 0),
-                        thickness=1,
-                    )
-    return newImage
+    return row1, row2, col1, col2
 
 
-def skeletonization(iimg):
-    img = cv2.imread(iimg, 0)
-    cv2.imshow("original", img)
-    size = np.size(img)
-    skel = np.zeros(img.shape, np.uint8)
+def cutImage(img):
+    kernel = np.ones((5, 5), dtype=np.uint8)
 
-    ret, img = cv2.threshold(img, 127, 255, 0)
-    element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
-    done = False
+    _, erosion = gabor(img, 0.7, theta=0)
+    erosion = cv2.morphologyEx(erosion, cv2.MORPH_OPEN, kernel)
 
-    while not done:
-        eroded = cv2.erode(img, element)
-        temp = cv2.dilate(eroded, element)
-        temp = cv2.subtract(img, temp)
-        skel = cv2.bitwise_or(skel, temp)
-        img = eroded.copy()
+    row1, row2, col1, col2 = getFingerprintRegion(erosion)
 
-        zeros = size - cv2.countNonZero(img)
-        if zeros == size:
-            done = True
+    h, w = img.shape
+    for i in range(h):
+        for j in range(w):
+            if not ((i < row2) and (i > row1) and (j > col1) and (j < col2)):
+                if img[i, j] != 255:
+                    img[i, j] = 255
 
-    cv2.imshow("skel", skel)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    return img.copy(), row1, row2, col1, col2
+
+
+def isBifurcation(row, col, img):
+    summation = (
+        int(img[row + 1][col - 1])
+        + int(img[row + 1][col])
+        + int(img[row + 1][col + 1])
+        + int(img[row][col - 1])
+        + int(img[row][col + 1])
+        + int(img[row - 1][col - 1])
+        + int(img[row - 1][col])
+        + int(img[row - 1][col + 1])
+    )
+    if summation == 3:
+        return True
+    return False
+
+
+def isEnding(row, col, img):
+    summation = (
+        int(img[row + 1][col - 1])
+        + int(img[row + 1][col])
+        + int(img[row + 1][col + 1])
+        + int(img[row][col - 1])
+        + int(img[row][col + 1])
+        + int(img[row - 1][col - 1])
+        + int(img[row - 1][col])
+        + int(img[row - 1][col + 1])
+    )
+    if summation == 1:
+        return True
+    return False
+
+
+def deginrad(degree):
+    radiant = 2 * np.pi / 360 * degree
+    return radiant
+
+
+def gaborFilter(img):
+    _, filt_imag = gabor(
+        img,
+        frequency=0.1,
+        theta=deginrad(90),
+        bandwidth=3,
+        sigma_x=None,
+        sigma_y=None,
+        n_stds=3,
+        offset=0,
+        mode="reflect",
+        cval=0,
+    )
+    return filt_imag.copy()
+
+
+# Comprueba que no hay una minucia del mismo tipo en una vecindad 3x3
+def isMinutaeClose(i, j, typeMinutae, l):
+    if (
+        [i - 1, j - 1, typeMinutae] in l
+        or [i - 1, j, typeMinutae] in l
+        or [i - 1, j + 1, typeMinutae] in l
+        or [i + 1, j - 1, typeMinutae] in l
+        or [i + 1, j, typeMinutae] in l
+        or [i + 1, j + 1, typeMinutae] in l
+        or [i, j - 1, typeMinutae] in l
+        or [i, j + 1, typeMinutae] in l
+    ):
+        return True
+    return False
 
 
 if __name__ == "__main__":
-    img = "./huellasFVC2004/101_3.tif"
+    plot = True
+    img = "./huellasFVC2004/103_8.tif"
 
+    # se lee la imagen de la huella
     image = cv2.imread(img, 0)
-    plt.matshow(image, cmap="gray")
-    plt.title("original")
 
+    if plot:
+        cv2.imshow("original", image)
+
+    # se corta la imagen para que solo quede la huella, davuelve los margenes tambien
+    image, row1, row2, col1, col2 = cutImage(image)
+    if plot:
+        cv2.imshow("cutted", image)
+
+    # se aplica un filtlo de gabor que devuelve la imagen binarizada
+    image = gaborFilter(image)
+    img_gabor = image.copy()  # se guarda para mostras las minucias despues
+    if plot:
+        cv2.imshow("gavor", image)
+
+    # se umbraliza la imagen adaptavivamente
     image = cv2.adaptiveThreshold(
-        image, 1, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2
+        np.invert(image), 1, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2
     )
+    if plot:
+        cv2.imshow("gabor; adaptiveThreshold", image * 255)
 
+    # se realiza un esqueleto de la huella
     sklen = skeletonize(image)
+    if plot:
+        plt.imshow(sklen, cmap="gray")
+        plt.title("gabor; adaptiveThreshold; skeleton")
 
-    plt.matshow(sklen, cmap="gray")
-    plt.title("skleton")
-    plt.show()
+    # se cuentan las minucias dadas unas condiciones
+    rows, cols = sklen.shape
+    minutaes = []
+    for i in range(rows):
+        for j in range(cols):
+            # se mira en aquellos puntos donde haya esqueleto
+            if sklen[i, j]:
+                # solo se miran los pixeles donde hay huella y formen parte del filtro de gabor (valen distinto de 0 ~False)
+                if (
+                    (i < row2)
+                    and (i > row1)
+                    and (j > col1)
+                    and (j < col2)
+                    and img_gabor[i][j]
+                ):
+                    if isBifurcation(i, j, sklen) and not isMinutaeClose(
+                        i, j, 3, minutaes
+                    ):
+                        minutaes.append([i, j, 3])
+
+                    if isEnding(i, j, sklen) and not isMinutaeClose(i, j, 1, minutaes):
+                        minutaes.append([i, j, 1])
+
+    minucias = pd.DataFrame.from_records(minutaes)
+    minucias.columns = ["row", "col", "label"]
+
+    terminaciones = minucias[minucias["label"] == 1].drop(columns="label")
+    bifurcaciones = minucias[minucias["label"] == 3].drop(columns="label")
+
+    if plot:
+        img = plt.imread(img)
+
+        fig5 = plt.figure(5)
+
+        plt.plot(
+            terminaciones["col"], terminaciones["row"], "b.", label="terminaciones"
+        )
+        plt.plot(
+            bifurcaciones["col"], bifurcaciones["row"], "r.", label="bifurcaciones"
+        )
+
+        plt.imshow(img, cmap="gray")
+        plt.legend(loc="best")
+        plt.title("minutaes")
+
+        plt.show()
+
+    # se guarda un txt con las minucias
+    minucias.to_csv("minutaes.txt", sep=";")
+
+    cv2.waitKey()
+    cv2.destroyAllWindows()
