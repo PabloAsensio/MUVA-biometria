@@ -40,8 +40,8 @@ def getFingerprintRegion(img):
 def cutImage(img):
     kernel = np.ones((5, 5), dtype=np.uint8)
 
-    _, erosion = gabor(img, 0.7, theta=0)
-    erosion = cv2.morphologyEx(erosion, cv2.MORPH_OPEN, kernel)
+    _, imag_gabor = gabor(img, 0.7, theta=0)
+    erosion = cv2.morphologyEx(imag_gabor, cv2.MORPH_OPEN, kernel)
 
     row1, row2, col1, col2 = getFingerprintRegion(erosion)
 
@@ -126,7 +126,7 @@ def isMinutaeClose(i, j, typeMinutae, l):
 
 if __name__ == "__main__":
     plot = True
-    img = "./huellasFVC2004/103_8.tif"
+    img = "./huellasFVC2004/101_3.tif"
 
     # se lee la imagen de la huella
     image = cv2.imread(img, 0)
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     image = gaborFilter(image)
     img_gabor = image.copy()  # se guarda para mostras las minucias despues
     if plot:
-        cv2.imshow("gavor", image)
+        cv2.imshow("gabor", image)
 
     # se umbraliza la imagen adaptavivamente
     image = cv2.adaptiveThreshold(
