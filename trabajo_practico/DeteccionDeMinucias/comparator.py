@@ -34,31 +34,3 @@ if __name__ == "__main__":
             len(minuciasEX) * 100 / len(minuciasGT),
         )
     )
-
-
-# if __name__ == "__main__":
-#     img = "./huellasFVC2004/101_3.tif"
-
-#     minucias = pd.read_csv("./GT-huellas/101_3.txt", sep=";", index_col=0, header=0)
-#     # minucias.columns = ["col", "row", "label"]
-
-#     terminaciones = minucias[minucias["label"] == 1].drop(columns="label")
-#     bifurcaciones = minucias[minucias["label"] == 3].drop(columns="label")
-
-#     if True:
-#         img = plt.imread(img)
-
-#         _ = plt.figure(5)
-
-#         plt.plot(
-#             terminaciones["col"], terminaciones["row"], "b.", label="terminaciones"
-#         )
-#         plt.plot(
-#             bifurcaciones["col"], bifurcaciones["row"], "r.", label="bifurcaciones"
-#         )
-
-#         plt.imshow(img, cmap="gray")
-#         plt.legend(loc="best")
-#         plt.title("minutaes GT")
-
-#         plt.show()
