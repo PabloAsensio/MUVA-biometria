@@ -82,13 +82,13 @@ if __name__ == "__main__":
         # nombre de los archivos de salida
         datafile_path1 = "GT-huellas/"
         datafile_path2 = filenames  # .remplace(".tif", "")
-        datafile_path3 = "_GT.txt"
+        datafile_path3 = ".txt"
         datafile_path = (
             datafile_path1 + str(datafile_path2).replace(".tif", "") + datafile_path3
         )
 
         minucias = pd.DataFrame.from_records(minucias)
-        minucias.columns = ["row", "col", "label"]
+        minucias.columns = ["col", "row", "label"]
         minucias.to_csv(datafile_path, sep=";")
 
         print("Se ha guardado en: ", datafile_path)
